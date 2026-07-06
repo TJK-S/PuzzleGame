@@ -2,7 +2,7 @@ import pygame
 
 import globals as G
 
-from Piece import PieceDraggable, GridPiece
+from Piece import PieceDraggable, GridPiece, EdgeType
 from random import getrandbits
 from enum import Enum
 
@@ -89,25 +89,33 @@ class Board:
                     start_y + y * (cellHeight + Board.GAP),
                 )
 
-                piece.leftEdge  = (x == 0)
-                piece.rightEdge = (x == self.gridSize[0] - 1)
-                piece.upEdge    = (y == 0)
-                piece.downEdge  = (y == self.gridSize[1] - 1)
+                piece.left  =  EdgeType.FLAT if (x == 0) else EdgeType.TAB
+                piece.right = EdgeType.FLAT if (x == self.gridSize[0] - 1) else EdgeType.TAB
+                piece.up    = EdgeType.FLAT if (y == 0) else EdgeType.TAB
+                piece.down  = EdgeType.FLAT if (y == self.gridSize[1] - 1) else EdgeType.TAB
 
-                if not piece.leftEdge:
+                if not piece.left == EdgeType.FLAT:
                     left = self.get((x - 1, y))
-                    piece.leftBlank = not left.rightBlank
+                    
+                    if left.right == EdgeType.BLANK:
+                        piece.left = EdgeType.TAB
+                    else:
+                        piece.left = EdgeType.BLANK
 
-                if not piece.upEdge:
+                if not piece.up == EdgeType.FLAT:
                     above = self.get((x, y - 1))
-                    piece.upBlank = not above.downBlank
 
-                if not piece.rightEdge:
-                    piece.rightBlank = bool(getrandbits(1))
+                    if above.down == EdgeType.BLANK:
+                        piece.up = EdgeType.TAB
+                    else:
+                        piece.up = EdgeType.BLANK
 
-                if not piece.downEdge:
-                    piece.downBlank = bool(getrandbits(1))
-                
+                if not piece.right == EdgeType.FLAT:
+                    piece.right = EdgeType.BLANK if bool(getrandbits(1)) else EdgeType.TAB
+
+                if not piece.down == EdgeType.FLAT:
+                    piece.down = EdgeType.BLANK if bool(getrandbits(1)) else EdgeType.TAB
+                    
                 self.pieceDraggables.append(
                     PieceDraggable(
                         (x, y),

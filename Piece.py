@@ -1,13 +1,18 @@
 import pygame
 from random import randint
+from enum import Enum
 
 import globals as G
+
+class EdgeType(Enum):
+    FLAT = 0
+    TAB = 1
+    BLANK = 2
 
 class GridPiece:
     
     __slots__ = {
-        "upBlank", "downBlank", "leftBlank", "rightBlank",
-        "upEdge" , "downEdge" , "leftEdge" , "rightEdge" ,
+        "up", "down", "left", "right",
         "shouldShow",
         "gridPos", "pixelPos",
         "image"
@@ -15,22 +20,14 @@ class GridPiece:
     
     def __init__(self, pos: tuple[int, int], image: pygame.Surface) -> None:
 
-        self.upBlank: bool = True
-        self.downBlank: bool = True
-        self.leftBlank: bool = True
-        self.rightBlank: bool = True
-
-        self.upEdge: bool = True
-        self.downEdge: bool = True
-        self.leftEdge: bool = True
-        self.rightEdge: bool = True
+        self.up = self.down = self.left = self.right = EdgeType.FLAT 
 
         # bool for if piece should render
         # true only when associating draggable is "inserted"
         self.shouldShow: bool = False
 
         self.gridPos: tuple[int, int] = pos
-        self.pixelPos: tuple[int, int] = (-1, -1) #Initialized in newBoard
+        self.pixelPos: tuple[int, int] = (-1, -1) #Initialized in Board.newBoard()
 
         self.image: pygame.Surface = image
     
@@ -40,17 +37,17 @@ class GridPiece:
         
         x, y = self.pixelPos
 
-        def draw_edge(is_blank: bool, edge: str):
-            color = (255, 0, 100) if is_blank else (0, 255, 100)
+        # def draw_edge(is_blank: bool, edge: str):
+        #     color = (255, 0, 100) if is_blank else (0, 255, 100)
 
-            if edge == "left":
-                pygame.draw.line(surface, color, (x, y), (x, y + G.pieceSize[1]), 4)
-            elif edge == "right":
-                pygame.draw.line(surface, color, (x + G.pieceSize[0], y), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
-            elif edge == "up":
-                pygame.draw.line(surface, color, (x, y), (x + G.pieceSize[0], y), 4)
-            elif edge == "down":
-                pygame.draw.line(surface, color, (x, y + G.pieceSize[1]), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
+        #     if edge == "left":
+        #         pygame.draw.line(surface, color, (x, y), (x, y + G.pieceSize[1]), 4)
+        #     elif edge == "right":
+        #         pygame.draw.line(surface, color, (x + G.pieceSize[0], y), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
+        #     elif edge == "up":
+        #         pygame.draw.line(surface, color, (x, y), (x + G.pieceSize[0], y), 4)
+        #     elif edge == "down":
+        #         pygame.draw.line(surface, color, (x, y + G.pieceSize[1]), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
 
         # pygame.draw.rect(
         #     surface,
@@ -63,10 +60,10 @@ class GridPiece:
             (x, y)
         )
 
-        draw_edge(self.leftBlank, "left")
-        draw_edge(self.rightBlank, "right")
-        draw_edge(self.upBlank, "up")
-        draw_edge(self.downBlank, "down") 
+        # draw_edge(self.leftBlank, "left")
+        # draw_edge(self.rightBlank, "right")
+        # draw_edge(self.upBlank, "up")
+        # draw_edge(self.downBlank, "down") 
 
 class PieceDraggable():
 
@@ -95,23 +92,23 @@ class PieceDraggable():
     def render(self, surface: pygame.Surface) -> None:
         x, y = self.pixelPos
 
-        def draw_edge(is_blank: bool, edge: str):
-            color = (255, 0, 0) if is_blank else (0, 255, 0)
+        # def draw_edge(is_blank: bool, edge: str):
+        #     color = (255, 0, 0) if is_blank else (0, 255, 0)
 
-            if edge == "left":
-                pygame.draw.line(surface, color, (x, y), (x, y + G.pieceSize[1]), 4)
-            elif edge == "right":
-                pygame.draw.line(surface, color, (x + G.pieceSize[0], y), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
-            elif edge == "up":
-                pygame.draw.line(surface, color, (x, y), (x + G.pieceSize[0], y), 4)
-            elif edge == "down":
-                pygame.draw.line(surface, color, (x, y + G.pieceSize[1]), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
+        #     if edge == "left":
+        #         pygame.draw.line(surface, color, (x, y), (x, y + G.pieceSize[1]), 4)
+        #     elif edge == "right":
+        #         pygame.draw.line(surface, color, (x + G.pieceSize[0], y), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
+        #     elif edge == "up":
+        #         pygame.draw.line(surface, color, (x, y), (x + G.pieceSize[0], y), 4)
+        #     elif edge == "down":
+        #         pygame.draw.line(surface, color, (x, y + G.pieceSize[1]), (x + G.pieceSize[0], y + G.pieceSize[1]), 4)
 
-        pygame.draw.rect(
-            surface,
-            (120, 12, 120),
-            (x, y, G.pieceSize[0], G.pieceSize[1])
-        )
+        # pygame.draw.rect(
+        #     surface,
+        #     (120, 12, 120),
+        #     (x, y, G.pieceSize[0], G.pieceSize[1])
+        # )
 
 
         fp = self.fatherPiece
@@ -121,10 +118,10 @@ class PieceDraggable():
             (x, y)
         )
 
-        draw_edge(fp.leftBlank, "left")
-        draw_edge(fp.rightBlank, "right")
-        draw_edge(fp.upBlank, "up")
-        draw_edge(fp.downBlank, "down")
+        # draw_edge(fp.leftBlank, "left")
+        # draw_edge(fp.rightBlank, "right")
+        # draw_edge(fp.upBlank, "up")
+        # draw_edge(fp.downBlank, "down")
 
     def contains(self, mousePos: tuple[int, int]) -> bool:
         mx, my = mousePos
