@@ -1,34 +1,31 @@
+# main.py
+
 import pygame
 
 import globals as G
-from Board import Board, BoardSize
-
+from MainMenu import MenuManager
+from Board import Board
 
 def main():
     pygame.init()
 
     WINDOW = pygame.display.set_mode(
-        (G.VIRTUALWIDTH, G.VIRTUALHEIGHT),
-        pygame.RESIZABLE
+        (G.VIRTUALWIDTH, G.VIRTUALHEIGHT)
     )
 
-    brodie: pygame.Surface = pygame.image.load("images/brodie.png")
-    brodie = pygame.transform.scale(brodie, (500,500))
-
+    MENUMANAGER = MenuManager()
     BOARD = Board()
-    BOARD.newBoard(brodie, BoardSize.SMALL)
 
     clock = pygame.time.Clock()
     FPS = 60
-    running = True
 
-    while running:
+    while G.running:
         for event in pygame.event.get():
-            match event.type:
-                case pygame.QUIT:
-                    running = False
+            if event.type == pygame.QUIT:
+                G.toggleRunning()
 
-                case pygame.MOUSEBUTTONDOWN:
+            if G.gamestate == G.GameState.Playing:
+                if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         mousePos = event.pos
 
@@ -37,7 +34,7 @@ def main():
                                 BOARD.activePiece = piece
                                 break
 
-                case pygame.MOUSEBUTTONUP:
+                elif event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         piece = BOARD.activePiece
 
@@ -48,16 +45,24 @@ def main():
 
                         BOARD.activePiece = None
 
-                case _: pass
+            elif G.gamestate == G.GameState.Menu:
+                MENUMANAGER.handleInput(event)
 
-        BOARD.update()
+        if G.gamestate == G.GameState.Playing:
+            BOARD.update()
+
 
         WINDOW.fill((124,124,124,255))
-        BOARD.render(WINDOW)
+        if G.gamestate == G.GameState.Playing:
+            BOARD.render(WINDOW)
+        elif G.gamestate == G.GameState.Menu:
+            MENUMANAGER.render(WINDOW)
+        
         pygame.display.flip()
 
+
         clock.tick(FPS)
-        # print(f"{clock.get_fps():.2f}")
+        print(f"{clock.get_fps():.2f}")
 
     pygame.quit()
 

@@ -1,3 +1,5 @@
+# Piece.py
+
 import pygame
 from random import randint
 from enum import Enum
@@ -52,8 +54,8 @@ class PieceDraggable():
 
         self.pos = pos 
         self.pixelPos: tuple[int, int] = (
-            randint(0, G.VIRTUALWIDTH), 
-            randint(0, G.VIRTUALHEIGHT)
+            randint(0, G.VIRTUALWIDTH - G.pieceSize[0]), 
+            randint(0, G.VIRTUALHEIGHT - G.pieceSize[1])
         )
 
         self.fatherPiece: GridPiece = fatherPiece

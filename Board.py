@@ -1,3 +1,5 @@
+# Board.py
+
 import pygame
 import globals as G
 
@@ -43,17 +45,10 @@ class Board:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def newBoard(self, image: pygame.Surface, size: BoardSize | None, customSize: tuple[int, int] | None = None) -> None:
-        if (size is None) == (customSize is None):
-            raise ValueError(
-                "Board.newBoard | Exactly one of 'size' or 'customSize' must be specified."
-            )
-
-        if size is not None:            
-            self.gridSize = size.value
-
-        if customSize:
-            self.gridSize = customSize
+    def newBoard(self, image: pygame.Surface, size: tuple[int, int]) -> None:
+        
+        if size[0] >= 0 and size[1] >= 0:
+            self.gridSize = size
 
         self.pieces.clear()
         self.pieceDraggables.clear()
