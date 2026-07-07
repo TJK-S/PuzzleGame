@@ -21,7 +21,8 @@ class Board:
         "pieces", "pieceDraggables",
         "activePiece",
         "imageSize", "startPos",
-        "tab", "tabs"
+        "tab", "tabs",
+        "completed", "completedTimer"
     )
 
     GAP: int = 0
@@ -39,6 +40,8 @@ class Board:
         self.tab: pygame.Surface = pygame.image.load("asset/tab.png").convert_alpha()
         self.tabs: dict[str, pygame.Surface] = {}
         
+        self.completed = False
+        self.completedTimer = 0.0
 
     def __new__(cls):
         if cls._instance is None:
@@ -247,9 +250,22 @@ class Board:
             )
         return self.pieces[y * width + x]
     
-    def update(self) -> None:
+    def update(self, dt: float) -> None:
         if self.activePiece:
             self.activePiece.update()
+
+        if not self.completed and len(self.pieceDraggables) == 0:
+            self.completed = True
+            self.completedTimer = 0.0
+
+        if self.completed:
+            self.completedTimer += dt
+
+            # After 7 seconds return to menu
+            if self.completedTimer >= 7.0:
+                self.completed = False
+                G.setGameState(G.GameState.Menu)
+
 
     def render(self, surface: pygame.Surface) -> None:
         for piece in self.pieces:
@@ -284,3 +300,11 @@ class Board:
                 (start_x + cols * (cell_w + self.GAP) - self.GAP, py),
                 1
             )
+
+        if self.completed and self.completedTimer >= 2.0:
+            font = pygame.font.SysFont(None, 72)
+
+            text = font.render("Congratulations!", True, (255, 255, 255))
+            rect = text.get_rect(center=(G.VIRTUALWIDTH // 2, G.VIRTUALHEIGHT // 2))
+
+            surface.blit(text, rect)

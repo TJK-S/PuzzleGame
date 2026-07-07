@@ -17,7 +17,8 @@ def main():
     BOARD = Board()
 
     clock = pygame.time.Clock()
-    FPS = 60
+    FPS: float = 60.0
+    dt: float = clock.tick(FPS) / 1000.0
 
     while G.running:
         for event in pygame.event.get():
@@ -49,8 +50,7 @@ def main():
                 MENUMANAGER.handleInput(event)
 
         if G.gamestate == G.GameState.Playing:
-            BOARD.update()
-
+            BOARD.update(dt)
 
         WINDOW.fill((124,124,124,255))
         if G.gamestate == G.GameState.Playing:
@@ -60,8 +60,7 @@ def main():
         
         pygame.display.flip()
 
-
-        clock.tick(FPS)
+        dt = clock.tick(FPS) / 1000.0
         print(f"{clock.get_fps():.2f}")
 
     pygame.quit()
