@@ -1,5 +1,4 @@
 import pygame
-
 import globals as G
 
 from Piece import PieceDraggable, GridPiece, EdgeType
@@ -19,10 +18,11 @@ class Board:
         "gridSize", 
         "pieces", "pieceDraggables",
         "activePiece",
-        "imageSize", "cellSize", "startPos"
+        "imageSize", "startPos",
+        "tab", "tabs"
     )
 
-    GAP: int = 6
+    GAP: int = 0
 
     def __init__(self) -> None:
         self.gridSize: tuple[int, int] = (-1, -1)
@@ -32,8 +32,11 @@ class Board:
         self.activePiece: PieceDraggable | None = None
 
         self.imageSize: tuple[int, int] = (-1, -1)
-        self.cellSize: tuple[int, int] = (-1, -1)
         self.startPos: tuple[int, int] = (-1, -1)
+
+        self.tab: pygame.Surface = pygame.image.load("asset/tab.png").convert_alpha()
+        self.tabs: dict[str, pygame.Surface] = {}
+        
 
     def __new__(cls):
         if cls._instance is None:
@@ -56,21 +59,23 @@ class Board:
         self.pieceDraggables.clear()
         self.imageSize = image.get_size()
 
-        # will need to create a new image from given image thats dimensions
-        # divide evenly with the given gridSize
-        # use the data from the created image to give to the fatherPieces (Piece Objects)
-        # basically every piece will get portions of the loaded image
-
         cellWidth = self.imageSize[0] // self.gridSize[0]
         cellHeight = self.imageSize[1] // self.gridSize[1]
 
-        self.cellSize = (cellWidth, cellHeight)
-        G.setPieceSize(self.cellSize)
+        G.setPieceSize((cellWidth, cellHeight))
+
+        scaled = pygame.transform.scale(self.tab, (cellWidth, cellHeight))
+        self.tabs = {
+            "up": scaled,
+            "down": pygame.transform.scale(pygame.transform.rotate(scaled, 180), (cellWidth, cellHeight)),
+            "left": pygame.transform.scale(pygame.transform.rotate(scaled,  90), (cellWidth, cellHeight)),
+            "right": pygame.transform.scale(pygame.transform.rotate(scaled, -90), (cellWidth, cellHeight))
+        }
 
         for y in range(self.gridSize[1]):
             for x in range(self.gridSize[0]):
-                rect = pygame.Rect(x * cellWidth, y * cellHeight, cellWidth, cellHeight)
-                self.pieces.append(GridPiece((x, y), image.subsurface(rect)))
+                # rect = pygame.Rect(x * cellWidth, y * cellHeight, cellWidth, cellHeight)
+                self.pieces.append(GridPiece((x, y)))
 
         board_width = self.gridSize[0] * cellWidth + (self.gridSize[0] - 1) * Board.GAP
         board_height = self.gridSize[1] * cellHeight + (self.gridSize[1] - 1) * Board.GAP
@@ -80,22 +85,28 @@ class Board:
         
         self.startPos = (start_x, start_y)
 
-        for y in range(self.gridSize[1]):
-            for x in range(self.gridSize[0]):
-                piece = self.get((x, y))
+        marginalizedImage = pygame.Surface(
+            (image.get_width() + cellWidth * 2, image.get_height() + cellHeight * 2), 
+            pygame.SRCALPHA
+        )
+        marginalizedImage.blit(image, (cellWidth, cellHeight))
+
+        for cy in range(self.gridSize[1]):
+            for cx in range(self.gridSize[0]):
+                piece = self.get((cx, cy))
                 
                 piece.pixelPos = (
-                    start_x + x * (cellWidth + Board.GAP),
-                    start_y + y * (cellHeight + Board.GAP),
+                    start_x + cx * (cellWidth + Board.GAP),
+                    start_y + cy * (cellHeight + Board.GAP),
                 )
 
-                piece.left  =  EdgeType.FLAT if (x == 0) else EdgeType.TAB
-                piece.right = EdgeType.FLAT if (x == self.gridSize[0] - 1) else EdgeType.TAB
-                piece.up    = EdgeType.FLAT if (y == 0) else EdgeType.TAB
-                piece.down  = EdgeType.FLAT if (y == self.gridSize[1] - 1) else EdgeType.TAB
+                piece.left  =  EdgeType.FLAT if (cx == 0) else EdgeType.TAB
+                piece.right = EdgeType.FLAT if (cx == self.gridSize[0] - 1) else EdgeType.TAB
+                piece.up    = EdgeType.FLAT if (cy == 0) else EdgeType.TAB
+                piece.down  = EdgeType.FLAT if (cy == self.gridSize[1] - 1) else EdgeType.TAB
 
                 if not piece.left == EdgeType.FLAT:
-                    left = self.get((x - 1, y))
+                    left = self.get((cx - 1, cy))
                     
                     if left.right == EdgeType.BLANK:
                         piece.left = EdgeType.TAB
@@ -103,7 +114,7 @@ class Board:
                         piece.left = EdgeType.BLANK
 
                 if not piece.up == EdgeType.FLAT:
-                    above = self.get((x, y - 1))
+                    above = self.get((cx, cy - 1))
 
                     if above.down == EdgeType.BLANK:
                         piece.up = EdgeType.TAB
@@ -115,10 +126,118 @@ class Board:
 
                 if not piece.down == EdgeType.FLAT:
                     piece.down = EdgeType.BLANK if bool(getrandbits(1)) else EdgeType.TAB
-                    
+                
+                # creating mask for piece
+                texture = pygame.Surface((cellWidth * 3, cellHeight * 3), pygame.SRCALPHA)
+                texture.fill((0, 0, 0, 255), (cellWidth, cellHeight, cellWidth, cellHeight))
+
+                    #UP
+                if piece.up != EdgeType.FLAT:
+                    if piece.up == EdgeType.TAB:
+                        tabUp: pygame.Surface = self.tabs["up"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                texture.set_at(
+                                    (cellWidth + x, y),
+                                    tabUp.get_at((x,y))
+                                )
+
+                    else:
+                        tabDown: pygame.Surface = self.tabs["down"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                if tabDown.get_at((x,y)).a != 0:
+                                    texture.set_at(
+                                        (cellWidth + x, cellHeight + y),
+                                        (0,0,0,0)
+                                    )
+                    #DOWN
+                if piece.down != EdgeType.FLAT:
+                    if piece.down == EdgeType.TAB:
+                        tabDown: pygame.Surface = self.tabs["down"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                texture.set_at(
+                                    (cellWidth + x, y + cellHeight * 2),
+                                    tabDown.get_at((x,y))
+                                )
+
+                    else:
+                        tabUp: pygame.Surface = self.tabs["up"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                if tabUp.get_at((x,y)).a != 0:
+                                    texture.set_at(
+                                        (cellWidth + x, cellHeight + y),
+                                        (0,0,0,0)
+                                    )
+                    #LEFT
+                if piece.left != EdgeType.FLAT:
+                    if piece.left == EdgeType.TAB:
+                        tabLeft: pygame.Surface = self.tabs["left"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                texture.set_at(
+                                    (x, cellHeight + y),
+                                    tabLeft.get_at((x,y))
+                                )
+
+                    else:
+                        tabRight: pygame.Surface = self.tabs["right"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                if tabRight.get_at((x,y)).a != 0:
+                                    texture.set_at(
+                                        (cellWidth + x, cellHeight + y),
+                                        (0,0,0,0)
+                                    )
+                    #RIGHT
+                if piece.right != EdgeType.FLAT:
+                    if piece.right == EdgeType.TAB:
+                        tabRight: pygame.Surface = self.tabs["right"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                texture.set_at(
+                                    (cellWidth * 2 + x, cellHeight + y),
+                                    tabRight.get_at((x,y))
+                                )
+
+                    else:
+                        tabLeft: pygame.Surface = self.tabs["left"]
+
+                        for x in range(cellWidth):
+                            for y in range(cellHeight):
+                                if tabLeft.get_at((x,y)).a != 0:
+                                    texture.set_at(
+                                        (cellWidth + x, cellHeight + y),
+                                        (0,0,0,0)
+                                    )
+                
+                # goal is to take 3x3 grids out of marginalizedImage
+                # paste the marginalizedImage onto the black parts of texture
+
+                SubsurfaceRect = pygame.Rect(cx * cellWidth, cy * cellHeight, cellWidth * 3, cellHeight * 3)
+                imageSubsurface = imageSubsurface = marginalizedImage.subsurface(SubsurfaceRect).copy()
+
+                for x in range(cellWidth * 3):
+                    for y in range(cellHeight * 3):
+                        if texture.get_at((x, y)).a != 0:
+                            texture.set_at(
+                                (x, y),
+                                imageSubsurface.get_at((x, y))
+                            )
+                piece.setImage(texture)
+
                 self.pieceDraggables.append(
                     PieceDraggable(
-                        (x, y),
+                        (cx, cy),
                         piece
                     )
                 )
@@ -146,7 +265,7 @@ class Board:
             piece.render(surface)
 
         cols, rows = self.gridSize
-        cell_w, cell_h = self.cellSize
+        cell_w, cell_h = G.pieceSize
         start_x, start_y = self.startPos
 
         color = (200, 200, 200)  # light gray grid lines

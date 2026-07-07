@@ -7,16 +7,16 @@ from Board import Board, BoardSize
 def main():
     pygame.init()
 
-    brodie: pygame.Surface = pygame.image.load("images/animal.png")
-    brodie = pygame.transform.scale(brodie, (600,500))
-
-    BOARD = Board()
-    BOARD.newBoard(brodie, BoardSize.MEDIUM)
-
     WINDOW = pygame.display.set_mode(
         (G.VIRTUALWIDTH, G.VIRTUALHEIGHT),
         pygame.RESIZABLE
     )
+
+    brodie: pygame.Surface = pygame.image.load("images/brodie.png")
+    brodie = pygame.transform.scale(brodie, (500,500))
+
+    BOARD = Board()
+    BOARD.newBoard(brodie, BoardSize.SMALL)
 
     clock = pygame.time.Clock()
     FPS = 60
@@ -52,7 +52,7 @@ def main():
 
         BOARD.update()
 
-        WINDOW.fill((0,0,0,255))
+        WINDOW.fill((124,124,124,255))
         BOARD.render(WINDOW)
         pygame.display.flip()
 
@@ -61,4 +61,5 @@ def main():
 
     pygame.quit()
 
-main()
+if __name__ == "__main__":
+    main()
