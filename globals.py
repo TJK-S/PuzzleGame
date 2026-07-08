@@ -27,3 +27,4 @@ def setGameState(state: GameState):
 
 currentImage: pygame.Surface | None = None
 gridSize: tuple[int, int] = (2, 2)
+

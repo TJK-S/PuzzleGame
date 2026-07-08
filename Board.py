@@ -6,6 +6,7 @@ import globals as G
 from Piece import PieceDraggable, GridPiece, EdgeType
 from random import getrandbits
 from enum import Enum
+from camera import Camera
 
 class BoardSize(Enum):
     TINY = (2, 2)
@@ -275,29 +276,36 @@ class Board:
         for piece in self.pieceDraggables:
             piece.render(surface)
 
+        camera = Camera()
+
         cols, rows = self.gridSize
         cell_w, cell_h = G.pieceSize
-        start_x, start_y = self.startPos
+
+        cell_w *= camera.zoom
+        cell_h *= camera.zoom
+        gap = self.GAP * camera.zoom
+
+        start_x, start_y = camera.world_to_screen(self.startPos)
 
         color = (200, 200, 200)  # light gray grid lines
 
         for x in range(cols + 1):
-            px = start_x + x * (cell_w + self.GAP) - self.GAP // 2
+            px = start_x + x * (cell_w + gap) - gap // 2
             pygame.draw.line(
                 surface,
                 color,
                 (px, start_y),
-                (px, start_y + rows * (cell_h + self.GAP) - self.GAP),
+                (px, start_y + rows * (cell_h + gap) - gap),
                 1
             )
 
         for y in range(rows + 1):
-            py = start_y + y * (cell_h + self.GAP) - self.GAP // 2
+            py = start_y + y * (cell_h + gap) - gap // 2
             pygame.draw.line(
                 surface,
                 color,
                 (start_x, py),
-                (start_x + cols * (cell_w + self.GAP) - self.GAP, py),
+                (start_x + cols * (cell_w + gap) - gap, py),
                 1
             )
 

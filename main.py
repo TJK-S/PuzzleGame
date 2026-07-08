@@ -5,6 +5,7 @@ import pygame
 import globals as G
 from MainMenu import MenuManager
 from Board import Board
+from camera import Camera
 
 def main():
     pygame.init()
@@ -15,6 +16,7 @@ def main():
 
     MENUMANAGER = MenuManager()
     BOARD = Board()
+    CAMERA = Camera()
 
     clock = pygame.time.Clock()
     FPS: float = 60.0
@@ -25,24 +27,35 @@ def main():
             if event.type == pygame.QUIT:
                 G.toggleRunning()
 
-            if G.gamestate == G.GameState.Playing:
-                if event.type == pygame.MOUSEBUTTONDOWN:
+            elif G.gamestate == G.GameState.Playing:
+
+                if event.type == pygame.MOUSEWHEEL:
+                    if event.y > 0:
+                        CAMERA.zoom *= 1.0 + CAMERA.ZOOMSPEED
+                    elif event.y < 0:
+                        CAMERA.zoom /= 1.0 + CAMERA.ZOOMSPEED
+
+                    CAMERA.zoom = max(
+                        CAMERA.MINZOOM,
+                        min(CAMERA.zoom, CAMERA.MAXZOOM)
+                    )
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        mousePos = event.pos
+                        mousePos = CAMERA.screen_to_world(event.pos)
 
                         for piece in reversed(BOARD.pieceDraggables):
-                            if piece.contains(mousePos):
+                            if piece.contains((int(mousePos[0]), int(mousePos[1]))):
                                 BOARD.activePiece = piece
                                 break
 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         piece = BOARD.activePiece
-
-                        if piece is not None:
-                            if piece.closeToFather():
-                                piece.fatherPiece.shouldShow = True
-                                BOARD.pieceDraggables.remove(piece)
+    
+                        if piece is not None and piece.closeToFather():
+                            piece.fatherPiece.shouldShow = True
+                            BOARD.pieceDraggables.remove(piece)
 
                         BOARD.activePiece = None
 
@@ -61,7 +74,8 @@ def main():
         pygame.display.flip()
 
         dt = clock.tick(FPS) / 1000.0
-        print(f"{clock.get_fps():.2f}")
+        # print(f"{clock.get_fps():.2f}")
+        print(CAMERA.zoom)
 
     pygame.quit()
 

@@ -3,7 +3,7 @@
 import pygame
 from random import randint
 from enum import Enum
-
+from camera import Camera
 import globals as G
 
 class EdgeType(Enum):
@@ -37,8 +37,22 @@ class GridPiece:
         if not self.shouldShow:
             return
         
-        x, y = self.pixelPos
-        surface.blit(self.image, (x - G.pieceSize[0], y - G.pieceSize[1]))
+        camera = Camera()
+
+        x, y = camera.world_to_screen(self.pixelPos)
+
+        image = pygame.transform.scale_by(
+            self.image,
+            camera.zoom
+        )
+
+        surface.blit(
+            image, 
+            (
+                x - G.pieceSize[0] * camera.zoom, 
+                y - G.pieceSize[1] * camera.zoom
+            )
+        )
 
     def setImage(self, image: pygame.Surface) -> None:
         self.image = image
@@ -61,17 +75,36 @@ class PieceDraggable():
         self.fatherPiece: GridPiece = fatherPiece
         
     def update(self) -> None:
-        x, y = pygame.mouse.get_pos()
+        camera = Camera()
+
+        x, y = camera.screen_to_world(
+            pygame.mouse.get_pos()
+        )
+
         self.pixelPos = (
-            x - G.pieceSize[0] // 2,
-            y - G.pieceSize[1] // 2
+            int(x) - G.pieceSize[0] // 2,
+            int(y) - G.pieceSize[1] // 2
         )
 
     def render(self, surface: pygame.Surface) -> None:
-        x, y = self.pixelPos
+        camera = Camera()
+
+        x, y = camera.world_to_screen(self.pixelPos)
 
         fp = self.fatherPiece
-        surface.blit(fp.image, (x - G.pieceSize[0], y - G.pieceSize[1]))
+
+        image = pygame.transform.scale_by(
+            fp.image,
+            camera.zoom
+        )
+
+        surface.blit(
+            image, 
+            (
+                x - G.pieceSize[0] * camera.zoom,
+                y - G.pieceSize[1] * camera.zoom
+            )
+        )
 
     def contains(self, mousePos: tuple[int, int]) -> bool:
         mx, my = mousePos

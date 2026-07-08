@@ -43,7 +43,7 @@ class MainMenu:
                 self.selectedIndex = ((self.selectedIndex + 1) % len(self.options))
                 self.prevDown = True
 
-            elif event.key == pygame.K_RETURN or pygame.K_e:
+            elif (event.key == pygame.K_RETURN or event.key == pygame.K_e) and not self.prevEnter:
                 option: str = self.options[self.selectedIndex]
 
                 if option == self.options[0]: # new puzzle
@@ -117,7 +117,7 @@ class PuzzleSelectMenu:
                 self.selectedIndex = ((self.selectedIndex + 1) % len(self.options))
                 self.prevDown = True
 
-            elif event.key == pygame.K_RETURN or pygame.K_e:
+            elif (event.key == pygame.K_RETURN) or (event.key == pygame.K_e) and not self.prevEnter:
                 option: str = self.options[self.selectedIndex]
 
                 if option == self.options[0]:
